@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:routes_app/project_theme.dart';
+import 'package:routes_app/services/constants.dart';
+import 'package:routes_app/services/googleLogin.dart';
+import 'package:routes_app/services/signUpApi.dart';
 import 'package:routes_app/view/forgotPassword/forgotPasswordScreen.dart';
 import 'package:routes_app/view/homePage/HomePageScreen.dart';
 import 'package:routes_app/view/signUp/SignUpScreen.dart';
+import 'package:routes_app/services/facebook_login.dart';
+import 'package:routes_app/widgets/cricularIndicator.dart';
+import 'package:routes_app/widgets/customToast.dart';
+import 'package:routes_app/widgets/helper.dart';
+import 'package:routes_app/services/signInApi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignInScreen extends StatefulWidget {
   @override
@@ -15,6 +24,22 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool visibility = true;
   bool isLoggingIn = false;
+  SignUp signup = SignUp();
+  SignIn signIn = SignIn();
+
+  void initState() async {
+    super.initState();
+
+    final prefs = await SharedPreferences.getInstance();
+    final prefsIsLogin = prefs.getBool('loggedIn');
+
+      if (prefsIsLogin) {
+        _SignIn(context);
+      }
+
+
+  }
+
   @override
   Widget build(BuildContext context) {
     var _height = MediaQuery.of(context).size.height;
@@ -23,7 +48,7 @@ class _SignInScreenState extends State<SignInScreen> {
       backgroundColor: ProjectTheme.projectBackgroundColor,
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.only(left: 35, right: 35, top: _height * 0.22),
+          padding: EdgeInsets.only(left: 35, right: 35, top: _height * 0.17),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -31,7 +56,7 @@ class _SignInScreenState extends State<SignInScreen> {
               buildForm(_width, _height),
               buildButton(context, _height, _width),
               buildSocialLogin(_height, _width),
-              buildBottomButtons(context,_height, _width)
+              buildBottomButtons(context, _height, _width)
             ],
           ),
         ),
@@ -157,36 +182,49 @@ class _SignInScreenState extends State<SignInScreen> {
       children: [
         Container(
           height: _height * 0.07,
-          width: _width ,
+          width: _width,
           child: FlatButton(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(8),
+                ),
               ),
-            ),
-            onPressed: () {
-              if (_formKey.currentState.validate()) {
-                setState(() {
-                  isLoggingIn = true;
-                  Navigator.pushNamed(context, HomePageScreen.routeName);
-                });
-              }
-            },
-            color: isLoggingIn
-                ? Colors.deepOrangeAccent
-                : ProjectTheme.projectPrimaryColor,
-            child: !isLoggingIn
-                ? const Text('Sign In',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700))
-                : const Text('Signing In..',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700)),
-          ),
+              onPressed: () async {
+                if (_formKey.currentState.validate()) {
+                  CustomCircularLoader(context);
+                  bool result = await signIn.signIn(
+                    email: _emailController.text.trim(),
+                    id: 0,
+                    pwd: _passwordController.text.trim(),
+                  );
+                  print(result);
+                  if (result) {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('loggedIn', true);
+                    await prefs.setString(
+                        'email', _emailController.text.trim());
+                    await prefs.setString(
+                        'pwd', _passwordController.text.trim());
+                    await prefs.setInt('id', 0);
+
+                    Navigator.pop(context);
+                    setState(() {
+                      _emailController.clear();
+                      _passwordController.clear();
+                      // Navigator.pushNamed(context, HomePageScreen.routeName);
+                    });
+                  } else {
+                    Navigator.pop(context);
+                    customToast(text: 'Login failed');
+                  }
+                }
+              },
+              color: ProjectTheme.projectPrimaryColor,
+              child: const Text('Sign In',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700))),
         ),
         SizedBox(
           height: _height * 0.03,
@@ -200,21 +238,23 @@ class _SignInScreenState extends State<SignInScreen> {
         color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700);
     return Column(
       children: [
-        Text('or use on of your social profiles',style: TextStyle(
-            color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w600),
-
+        Text(
+          'or use on of your social profiles',
+          style: TextStyle(
+              color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w600),
         ),
-        SizedBox(height: _height * 0.03,),
+        SizedBox(
+          height: _height * 0.03,
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: Color(0xFF3B5998),
-                ),
-                  borderRadius: BorderRadius.all(Radius.circular(8))
-              ),
+                  border: Border.all(
+                    color: Color(0xFF3B5998),
+                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(8))),
               height: _height * 0.06,
               width: _width * .38,
               child: FlatButton.icon(
@@ -234,7 +274,48 @@ class _SignInScreenState extends State<SignInScreen> {
                   color: Color(0xFF3B5998),
                 ),
                 color: Colors.white,
-                onPressed: () {},
+                onPressed: () async {
+                  await googlelogin();
+                  print(Constants.name);
+                  CustomCircularLoader(context);
+                  print('++++++++++++++++++++++++++++ ${Constants.id}');
+
+                  if (Constants.registered == true) {
+                    bool result = await signIn.signIn(
+                        email: '', id: Constants.id, pwd: '');
+                    print(result);
+                    if (result) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('loggedIn', true);
+                      await prefs.setString('email', '');
+                      await prefs.setString('pwd', '');
+                      await prefs.setInt('id', Constants.id);
+                    } else {
+                      customToast(text: 'Login failed');
+                    }
+                  } else {
+                    bool result = await signup.google(
+                      systype: 'google',
+                      email: Constants.email.trim(),
+                      name: Constants.name.trim(),
+                      id: Constants.id,
+                      termsdt: Helper.getDate(DateTime.now()),
+                    );
+                    print(result);
+
+                    if (result) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('loggedIn', true);
+                      await prefs.setString('email', '');
+                      await prefs.setString('pwd', '');
+                      await prefs.setInt('id', Constants.id);
+                    } else {
+                      customToast(text: 'Sorry couldn\'t register');
+                    }
+                  }
+
+                  Navigator.pop(context);
+                },
               ),
             ),
             Container(
@@ -257,35 +338,86 @@ class _SignInScreenState extends State<SignInScreen> {
                   color: Colors.white,
                 ),
                 color: Color(0xFF3B5998),
-                onPressed: () {},
+                onPressed: () async {
+                  await fblogin();
+                  CustomCircularLoader(context);
+                  if (Constants.registered == true) {
+                    bool result = await signIn.signIn(
+                        email: '', id: Constants.id, pwd: '');
+                    print(result);
+                    if (result) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('loggedIn', true);
+                      await prefs.setString('email', '');
+                      await prefs.setString('pwd', '');
+                      await prefs.setInt('id', Constants.id);
+                    } else {
+                      customToast(text: 'Login failed');
+                    }
+                  } else {
+                    bool result = await signup.fbSignUp(
+                      systype: 'facebook',
+                      email: Constants.email,
+                      name: Constants.name,
+                      first_name: Constants.first_name,
+                      last_name: Constants.last_name,
+                      id: Constants.id,
+                      termsdt: Helper.getDate(DateTime.now()),
+                    );
+                    print(result);
+
+                    if (result) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('loggedIn', true);
+                      await prefs.setString('email', '');
+                      await prefs.setString('pwd', '');
+                      await prefs.setInt('id', Constants.id);
+                    } else {
+                      customToast(text: 'Sorry couldn\'t register');
+                    }
+                  }
+                  Navigator.pop(context);
+                },
               ),
             ),
           ],
         ),
-        SizedBox(height: _height * 0.035,)
+        SizedBox(
+          height: _height * 0.035,
+        )
       ],
     );
   }
 
-  Widget buildBottomButtons (BuildContext context, double _height, double _width){
-    return Row (
+  Widget buildBottomButtons(
+      BuildContext context, double _height, double _width) {
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-
-      InkWell(child: Text('Forgot Password?',style: TextStyle(
-          color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-        onTap: (){
-        Navigator.pushNamed(context, ForgotPasswordScreen.routeName);
-      },),
-      InkWell(child: Text('Sign Up',style: TextStyle(
-          color: ProjectTheme.projectPrimaryColor, fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-        onTap: (){
-        Navigator.pushNamed(context, SignUpScreen.routeName);
-      },)
-
-    ],);
+        InkWell(
+          child: Text(
+            'Forgot Password?',
+            style: TextStyle(
+                color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          onTap: () {
+            Navigator.pushNamed(context, ForgotPasswordScreen.routeName);
+          },
+        ),
+        InkWell(
+          child: Text(
+            'Sign Up',
+            style: TextStyle(
+                color: ProjectTheme.projectPrimaryColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w600),
+          ),
+          onTap: () {
+            Navigator.pushNamed(context, SignUpScreen.routeName);
+          },
+        )
+      ],
+    );
   }
 
   visibilePassword() {
@@ -296,4 +428,26 @@ class _SignInScreenState extends State<SignInScreen> {
         visibility = true;
     });
   }
+
+
+  void _SignIn(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final prefsEmail = prefs.getString('email');
+    final prefsPass = prefs.getString('pwd');
+    final prefsId = prefs.getInt('id');
+    try {
+      bool result = await signIn.signIn(email: prefsEmail,pwd: prefsPass,id: prefsId);
+
+      if(result) {
+        // Navigator.pushNamed(context, HomePageScreen.routeName);
+      }
+
+        // Navigator.pushNamedAndRemoveUntil(
+        //     context, BottomNavigation.routeName, (route) => false);
+    } catch (e) {
+      customToast(text: e.toString());
+    }
+  }
+
 }

@@ -31,6 +31,14 @@ dependencies:
   dropdown_date_picker: ^0.1.1+2
   checkbox_list_tile_more_customizable: ^2.0.0
   groovin_widgets: ^1.6.0
+  flutter_facebook_login: ^1.1.1
+  google_maps_flutter: ^1.1.1
+  location: ^3.2.4
+  flutter_awesome_alert_box: ^1.0.1
+  http: ^0.12.2
+  google_sign_in: ^4.5.9
+  fluttertoast: ^7.1.1
+  shared_preferences: ^0.5.12+4
 
 dev_dependencies:
   flutter_test:

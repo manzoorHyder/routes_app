@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:routes_app/services/signUpApi.dart';
 import 'package:routes_app/view/homePage/HomePageScreen.dart';
+import 'package:routes_app/view/signInScreen/signInScreen.dart';
+import 'package:routes_app/widgets/cricularIndicator.dart';
 import 'package:routes_app/widgets/customButton.dart';
+import 'package:routes_app/widgets/customToast.dart';
+import 'package:routes_app/widgets/helper.dart';
 
 import '../../project_theme.dart';
 
 class SignUpScreen extends StatefulWidget {
   static const routeName = '/sign-up';
+
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
 }
@@ -15,8 +21,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool visibility = true;
-  bool isLoggingIn = false;
   bool checkedValue = false;
+  SignUp signUp = SignUp();
+  bool isLoggingIn = false;
+
   @override
   Widget build(BuildContext context) {
     var _height = MediaQuery.of(context).size.height;
@@ -29,7 +37,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           child: Column(
             children: [
               buildForm(_width, _height),
-              buildButtons(_width, _height)
+              buildButtons(_width, _height),
             ],
           ),
         ),
@@ -133,7 +141,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               controlAffinity: ListTileControlAffinity.leading),
           SizedBox(
             height: _height * 0.035,
-          )
+          ),
         ],
       ),
     );
@@ -144,15 +152,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       children: [
         CustomRoundedButton(
           buttontitle: 'Continue',
-          onPressed: () {
-            if (_formKey.currentState.validate()) {
-              if (checkedValue == true) {
-                setState(() {
-                  isLoggingIn = true;
-                  Navigator.pushNamed(context, HomePageScreen.routeName);
-                });
-              }
-            }
+          onPressed: () async {
+            _register(context);
+
           },
         ),
         SizedBox(
@@ -184,6 +186,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
         )
       ],
     );
+  }
+
+  void _register(BuildContext context) async {
+    if (_formKey.currentState.validate()) {
+      if (checkedValue == true) {
+        CustomCircularLoader(context);
+          bool result = await signUp.self(
+            systype: 'self',
+            email: _emailController.text.trim(),
+            pwd: _passwordController.text.trim(),
+            name: '',
+            first_name: '',
+            last_name: '',
+            id: 0,
+            birthdate: '1990-01-01',
+            termsdt: Helper.getDate(DateTime.now()),
+          );
+          print(result);
+          if(result){
+            Navigator.pop(context);
+            setState(() {
+              _emailController.clear();
+              _passwordController.clear();
+              isLoggingIn = false;
+              Navigator.pushNamed(context, '/');
+            });
+            customToast(text: 'Successfully Registered, Please Sign In');
+          }
+          else {
+            Navigator.pop(context);
+            customToast(text: 'Sorry couldn\'t register');
+            print('sorry couldn\'t register');
+          }
+
+
+
+      }
+    }
+  }
+
+  Widget buildLoading (){
+    if(isLoggingIn == true) {
+     return CustomCircularLoader(context);
+    }
+    else {
+    return Container();
+    }
   }
 
   visibilePassword() {

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "475977565907",
+    "project_id": "fire-shot-300822",
+    "storage_bucket": "fire-shot-300822.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475977565907:android:268df1f5ae66e23e757626",
+        "android_client_info": {
+          "package_name": "com.geeksUnit.routes_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "475977565907-v68irp175nkmpruq4dqpf99sq8nnd7ph.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBK3w2uXV3E_2YvsRz0lNoSWlhZkD4KnNA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "475977565907-v68irp175nkmpruq4dqpf99sq8nnd7ph.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

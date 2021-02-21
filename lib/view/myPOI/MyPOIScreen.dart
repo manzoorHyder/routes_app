@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_awesome_alert_box/flutter_awesome_alert_box.dart';
 import 'package:routes_app/view/Edit/EditScreen.dart';
 import 'package:routes_app/view/followMe/FollowMeScreen.dart';
 import 'package:routes_app/widgets/customButton.dart';
@@ -25,7 +26,11 @@ class _MyPOIScreenState extends State<MyPOIScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomRoundedButton(buttontitle: 'Add New POI', onPressed: () {}),
+            CustomRoundedButton(
+                buttontitle: 'Add New POI',
+                onPressed: () {
+                  Navigator.pushNamed(context, EditScreen.routeName);
+                }),
             buildYourPOI()
           ],
         ),
@@ -89,13 +94,26 @@ class _MyPOIScreenState extends State<MyPOIScreen> {
                 )),
             Expanded(
                 flex: 1,
-                child: IconButton(icon: Icon(Icons.edit), onPressed: () {
-                  Navigator.pushNamed(context, EditScreen.routeName);
-                })),
+                child: IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.pushNamed(context, EditScreen.routeName);
+                    })),
             Expanded(
                 flex: 1,
                 child: IconButton(
-                    icon: Icon(Icons.delete_forever_sharp), onPressed: () {})),
+                    icon: Icon(Icons.delete_forever_sharp),
+                    onPressed: () {
+                      ConfirmAlertBox(
+                          icon: Icons.delete_forever_sharp,
+                          title: 'Delete POI',
+                          buttonColorForNo: ProjectTheme.projectPrimaryColor,
+                          infoMessage: 'Are you sure?',
+                          context: context,
+                          onPressedYes: () {
+                            Navigator.pop(context);
+                          });
+                    })),
           ],
         ),
         SizedBox(
